@@ -91,15 +91,18 @@ export default function Home() {
               <p className="py-4 text-base-content/80">
                 Creadores de mundos paralelos y economías multimillonarias
                 donde todos somos iguales.
+
+                iremos actualizando esta web esta en construcion el login con google ya lo puedes probar hacer click en login (login con google)
               </p>
+              
 
               <div className="card-actions justify-end">
                 <button className="btn btn-primary">
-                  Acción Principal
+                  en creacion
                 </button>
 
                 <button className="btn btn-outline btn-secondary">
-                  Secundario
+                  en creacion
                 </button>
               </div>
             </div>
