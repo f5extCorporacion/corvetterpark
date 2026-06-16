@@ -92,7 +92,7 @@ export default function Home() {
                 Creadores de mundos paralelos y economías multimillonarias
                 donde todos somos iguales.
 
-                iremos actualizando esta web esta en construcion el login con google ya lo puedes probar hacer click en login (login con google)
+                iremos actualizando esta web esta en construción el login con google ya lo puedes probar hacer click en login  (continue con  google)
               </p>
               
 
