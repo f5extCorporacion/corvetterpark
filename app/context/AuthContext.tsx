@@ -23,6 +23,10 @@ interface AuthContextType {
   } | null;
   loading: boolean;
   loginGoogle: () => void;
+  loginCredentials: (
+    email: string,
+    password: string
+  ) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
   authenticated: boolean;
 }
@@ -52,6 +56,20 @@ export function AuthProvider({
     signIn("google");
   };
 
+  const loginCredentials = async (email: string, password: string) => {
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (!res || res.error) {
+      return { ok: false, error: "Email o contraseña incorrectos" };
+    }
+
+    return { ok: true };
+  };
+
   const logout = () => {
     signOut({
       callbackUrl: "/",
@@ -65,6 +83,7 @@ export function AuthProvider({
         loading: status === "loading",
         authenticated,
         loginGoogle,
+        loginCredentials,
         logout,
       }}
     >
