@@ -6,7 +6,7 @@ import HeaderMenu from "../header";
 import MagicRings from "../component/MagicRings";
 import { signIn } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { driver } from "driver.js";
+import { driver, type Driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
 // ============================================
@@ -45,16 +45,6 @@ interface DriverConfig {
   onDeselected?: () => void;
 }
 
-// Interfaz para el objeto Driver
-interface DriverInstance {
-  drive: () => void;
-  destroy: () => void;
-  isActive: () => boolean;
-  setConfig: (config: Partial<DriverConfig>) => void;
-  moveNext: () => void;
-  movePrev: () => void;
-}
-
 // ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
@@ -66,7 +56,7 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [isTourActive, setIsTourActive] = useState<boolean>(false);
-    const driverRef = useRef<DriverInstance | null>(null);
+    const driverRef = useRef<Driver | null>(null); // ✅ Usar el tipo Driver de la librería
 
     // Inicializar DriveJS
     useEffect(() => {
@@ -131,8 +121,8 @@ export default function LoginPage() {
             }
         };
 
-        // Inicializar driver con los tipos
-        driverRef.current = driver(driverConfig) as DriverInstance;
+        // ✅ Inicializar driver sin casteo forzado
+        driverRef.current = driver(driverConfig);
 
         // Cleanup
         return () => {
@@ -319,9 +309,6 @@ export default function LoginPage() {
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Formulario de credenciales comentado */}
-                            {/* ... */}
                         </div>
                     </div>
                 </div>
