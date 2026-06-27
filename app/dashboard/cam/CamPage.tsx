@@ -18,6 +18,13 @@ export default function CamPage() {
     isValid: boolean;
   } | null>(null);
 
+  // ✅ Función para renderizar icono de vehículo
+  const renderVehicleIcon = (type: 'car' | 'motorcycle' | null) => {
+    if (type === 'car') return '🚗';
+    if (type === 'motorcycle') return '🏍️';
+    return '❓';
+  };
+
   // Verificar si el navegador soporta getUserMedia
   useEffect(() => {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -27,7 +34,6 @@ export default function CamPage() {
 
   // Función para validar placa colombiana
   const validateColombianPlate = (text: string) => {
-    // Limpiar el texto: eliminar espacios, guiones y convertir a mayúsculas
     const cleanText = text
       .toUpperCase()
       .replace(/[-\s]/g, '')
@@ -36,7 +42,6 @@ export default function CamPage() {
 
     console.log("🔍 Texto limpio para validar:", cleanText);
 
-    // Patrones de placas colombianas
     const carPlatePatterns = [
       /^[A-Z]{3}\d{3}$/,
       /^[A-Z]{3}\d{2}[A-Z]$/,
@@ -51,7 +56,6 @@ export default function CamPage() {
     let type: 'car' | 'motorcycle' | null = null;
     let formattedPlate = '';
 
-    // Verificar si es placa de carro
     for (const pattern of carPlatePatterns) {
       if (pattern.test(cleanText)) {
         isValid = true;
@@ -61,7 +65,6 @@ export default function CamPage() {
       }
     }
 
-    // Si no es carro, verificar si es moto
     if (!isValid) {
       for (const pattern of motorcyclePlatePatterns) {
         if (pattern.test(cleanText)) {
@@ -73,7 +76,6 @@ export default function CamPage() {
       }
     }
 
-    // Formatear la placa para mostrar (ABC-123 o ABC-12D)
     if (isValid && formattedPlate.length >= 6) {
       const firstPart = formattedPlate.substring(0, 3);
       const secondPart = formattedPlate.substring(3);
@@ -89,98 +91,83 @@ export default function CamPage() {
   };
 
   // Función para extraer texto con Tesseract
- // Función para extraer texto con Tesseract
-const extractTextFromImage = async (imageData: string) => {
-  setIsProcessing(true);
-  setExtractedText(null);
-  setPlateInfo(null);
+  const extractTextFromImage = async (imageData: string) => {
+    setIsProcessing(true);
+    setExtractedText(null);
+    setPlateInfo(null);
 
-  try {
-    // Crear worker
-    const worker = await Tesseract.createWorker("spa+eng");
+    try {
+      const worker = await Tesseract.createWorker("spa+eng");
 
-    // Configurar OCR
- await worker.setParameters({
-  tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ",
-  tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
-});
+      await worker.setParameters({
+        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ",
+        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+      });
 
-    const result = await worker.recognize(imageData);
+      const result = await worker.recognize(imageData);
+      await worker.terminate();
 
-    await worker.terminate();
+      const text = result.data.text.trim();
+      console.log("📝 Texto extraído:", text);
 
-    const text = result.data.text.trim();
+      if (text.length > 0) {
+        const validationResult = validateColombianPlate(text);
 
-    console.log("📝 Texto extraído:", text);
-
-    if (text.length > 0) {
-      const validationResult = validateColombianPlate(text);
-
-      if (validationResult.isValid) {
-        setPlateInfo({
-          plate: validationResult.plate,
-          type: validationResult.type,
-          isValid: true,
-        });
-
-        setExtractedText(validationResult.plate);
-        setShowImage(false);
-      } else {
-        const alphanumericText = text
-          .replace(/[^A-Za-z0-9]/g, "")
-          .toUpperCase();
-
-        const secondValidation =
-          validateColombianPlate(alphanumericText);
-
-        if (secondValidation.isValid) {
+        if (validationResult.isValid) {
           setPlateInfo({
-            plate: secondValidation.plate,
-            type: secondValidation.type,
+            plate: validationResult.plate,
+            type: validationResult.type,
             isValid: true,
           });
-
-          setExtractedText(secondValidation.plate);
+          setExtractedText(validationResult.plate);
           setShowImage(false);
         } else {
-          setExtractedText("No se detectó una placa válida");
+          const alphanumericText = text
+            .replace(/[^A-Za-z0-9]/g, "")
+            .toUpperCase();
 
-          setPlateInfo({
-            plate: "",
-            type: null,
-            isValid: false,
-          });
+          const secondValidation = validateColombianPlate(alphanumericText);
 
-          setShowImage(true);
+          if (secondValidation.isValid) {
+            setPlateInfo({
+              plate: secondValidation.plate,
+              type: secondValidation.type,
+              isValid: true,
+            });
+            setExtractedText(secondValidation.plate);
+            setShowImage(false);
+          } else {
+            setExtractedText("No se detectó una placa válida");
+            setPlateInfo({
+              plate: "",
+              type: null,
+              isValid: false,
+            });
+            setShowImage(true);
+          }
         }
+      } else {
+        setExtractedText("No se detectó texto en la imagen");
+        setPlateInfo({
+          plate: "",
+          type: null,
+          isValid: false,
+        });
+        setShowImage(true);
       }
-    } else {
-      setExtractedText("No se detectó texto en la imagen");
-
+    } catch (error) {
+      console.error("❌ Error al extraer texto:", error);
+      setExtractedText("Error al procesar la imagen");
       setPlateInfo({
         plate: "",
         type: null,
         isValid: false,
       });
-
       setShowImage(true);
+    } finally {
+      setIsProcessing(false);
     }
-  } catch (error) {
-    console.error("❌ Error al extraer texto:", error);
-
-    setExtractedText("Error al procesar la imagen");
-
-    setPlateInfo({
-      plate: "",
-      type: null,
-      isValid: false,
-    });
-
-    setShowImage(true);
-  } finally {
-    setIsProcessing(false);
-  }
-};
+  };
 
   // Activar cámara
   const activateCamera = async () => {
@@ -242,25 +229,16 @@ const extractTextFromImage = async (imageData: string) => {
     };
   }, []);
 
-  // Renderizar icono según tipo de vehículo
-  const renderVehicleIcon = (type: 'car' | 'motorcycle' | null) => {
-    if (type === 'car') return '🚗';
-    if (type === 'motorcycle') return '🏍️';
-    return '❓';
-  };
-
   return (
     <div className="max-w-4xl mx-auto p-6 font-sans">
       <h1 className="text-3xl font-bold mb-6">🚗 Validación de Placas</h1>
 
-      {/* Mostrar errores */}
       {error && (
         <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-4 border border-red-200">
           ⚠️ {error}
         </div>
       )}
 
-      {/* Controles */}
       <div className="flex flex-wrap gap-3 mb-6">
         {!isCameraActive ? (
           <button
@@ -293,7 +271,6 @@ const extractTextFromImage = async (imageData: string) => {
         )}
       </div>
 
-      {/* Vista de la cámara */}
       {isCameraActive && (
         <div className="relative bg-black rounded-xl overflow-hidden mb-6">
           <Webcam
@@ -318,14 +295,12 @@ const extractTextFromImage = async (imageData: string) => {
             className="w-full h-auto block"
           />
 
-          {/* Overlay de guía para placas */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4/5 h-1/3 border-2 border-dashed border-white/50 rounded-xl flex items-center justify-center pointer-events-none">
             <div className="text-white/70 text-sm text-center">
               📍 Encuadra la placa aquí
             </div>
           </div>
 
-          {/* Indicador de procesamiento */}
           {isProcessing && (
             <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
               <div className="text-center text-white">
@@ -337,7 +312,6 @@ const extractTextFromImage = async (imageData: string) => {
         </div>
       )}
 
-      {/* Resultados de la validación */}
       {capturedImage && (
         <div className="mt-6 p-4 border-2 border-gray-200 rounded-xl">
           <h3 className="text-xl font-semibold mb-4">
@@ -345,11 +319,10 @@ const extractTextFromImage = async (imageData: string) => {
           </h3>
 
           {plateInfo?.isValid ? (
-            // Mostrar placa validada
             <div className="p-5 bg-green-50 rounded-lg border-2 border-green-300 mb-4">
               <div className="flex items-center gap-4 flex-wrap">
                 <span className="text-6xl">
-                  {renderVehicleIcon(plateInfo.type)}
+                 
                 </span>
                 <div>
                   <div className="text-4xl font-bold text-green-800">
@@ -362,18 +335,20 @@ const extractTextFromImage = async (imageData: string) => {
               </div>
             </div>
           ) : (
-            // Mostrar imagen si no es placa válida
             <>
-              <img
-                src={capturedImage}
-                alt="Captura"
-                className="w-full rounded-lg mb-4"
-              />
+              {/* ✅ Usar showImage para controlar la visualización */}
+              {showImage && (
+                <img
+                  src={capturedImage}
+                  alt="Captura"
+                  className="w-full rounded-lg mb-4"
+                />
+              )}
               {extractedText && (
                 <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200 text-red-800">
                   <strong>❌ No se detectó una placa válida</strong>
                   <div className="mt-2 text-sm">
-                    Texto detectado: "{extractedText}"
+                    Texto detectado: {extractedText}
                   </div>
                   <div className="mt-2 text-sm text-gray-600">
                     💡 Asegúrate de que la placa esté bien iluminada y enfocada
