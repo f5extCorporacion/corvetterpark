@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
-import Tesseract from "tesseract.js";
+import Tesseract, { PSM } from "tesseract.js";
 
 export default function CamPage() {
   const webcamRef = useRef<Webcam>(null);
@@ -89,85 +89,98 @@ export default function CamPage() {
   };
 
   // Función para extraer texto con Tesseract
-  const extractTextFromImage = async (imageData: string) => {
-    setIsProcessing(true);
-    setExtractedText(null);
-    setPlateInfo(null);
+ // Función para extraer texto con Tesseract
+const extractTextFromImage = async (imageData: string) => {
+  setIsProcessing(true);
+  setExtractedText(null);
+  setPlateInfo(null);
 
-    try {
-      const result = await Tesseract.recognize(
-        imageData,
-        'spa+eng',
-        {
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              console.log(`Progreso: ${Math.round(m.progress * 100)}%`);
-            }
-          },
-          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',
-          tessedit_pageseg_mode: '6',
-        }
-      );
+  try {
+    // Crear worker
+    const worker = await Tesseract.createWorker("spa+eng");
 
-      const text = result.data.text.trim();
-      console.log("📝 Texto extraído:", text);
+    // Configurar OCR
+ await worker.setParameters({
+  tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ",
+  tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+});
 
-      if (text.length > 0) {
-        const validationResult = validateColombianPlate(text);
+    const result = await worker.recognize(imageData);
 
-        if (validationResult.isValid) {
+    await worker.terminate();
+
+    const text = result.data.text.trim();
+
+    console.log("📝 Texto extraído:", text);
+
+    if (text.length > 0) {
+      const validationResult = validateColombianPlate(text);
+
+      if (validationResult.isValid) {
+        setPlateInfo({
+          plate: validationResult.plate,
+          type: validationResult.type,
+          isValid: true,
+        });
+
+        setExtractedText(validationResult.plate);
+        setShowImage(false);
+      } else {
+        const alphanumericText = text
+          .replace(/[^A-Za-z0-9]/g, "")
+          .toUpperCase();
+
+        const secondValidation =
+          validateColombianPlate(alphanumericText);
+
+        if (secondValidation.isValid) {
           setPlateInfo({
-            plate: validationResult.plate,
-            type: validationResult.type,
-            isValid: true
+            plate: secondValidation.plate,
+            type: secondValidation.type,
+            isValid: true,
           });
-          setExtractedText(validationResult.plate);
+
+          setExtractedText(secondValidation.plate);
           setShowImage(false);
         } else {
-          const alphanumericText = text.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-          const secondValidation = validateColombianPlate(alphanumericText);
+          setExtractedText("No se detectó una placa válida");
 
-          if (secondValidation.isValid) {
-            setPlateInfo({
-              plate: secondValidation.plate,
-              type: secondValidation.type,
-              isValid: true
-            });
-            setExtractedText(secondValidation.plate);
-            setShowImage(false);
-          } else {
-            setExtractedText("No se detectó una placa válida");
-            setPlateInfo({
-              plate: '',
-              type: null,
-              isValid: false
-            });
-            setShowImage(true);
-          }
+          setPlateInfo({
+            plate: "",
+            type: null,
+            isValid: false,
+          });
+
+          setShowImage(true);
         }
-      } else {
-        setExtractedText("No se detectó texto en la imagen");
-        setPlateInfo({
-          plate: '',
-          type: null,
-          isValid: false
-        });
-        setShowImage(true);
       }
+    } else {
+      setExtractedText("No se detectó texto en la imagen");
 
-    } catch (error) {
-      console.error("❌ Error al extraer texto:", error);
-      setExtractedText("Error al procesar la imagen");
       setPlateInfo({
-        plate: '',
+        plate: "",
         type: null,
-        isValid: false
+        isValid: false,
       });
+
       setShowImage(true);
-    } finally {
-      setIsProcessing(false);
     }
-  };
+  } catch (error) {
+    console.error("❌ Error al extraer texto:", error);
+
+    setExtractedText("Error al procesar la imagen");
+
+    setPlateInfo({
+      plate: "",
+      type: null,
+      isValid: false,
+    });
+
+    setShowImage(true);
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   // Activar cámara
   const activateCamera = async () => {
