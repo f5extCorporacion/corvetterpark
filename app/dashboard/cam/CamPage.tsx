@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import Tesseract, { PSM } from "tesseract.js";
+import { PlateInfo, getVehicleIcon, getVehicleLabel } from "./vehicle";
 
 export default function CamPage() {
   const webcamRef = useRef<Webcam>(null);
@@ -12,27 +13,16 @@ export default function CamPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showImage, setShowImage] = useState(true);
-  const [plateInfo, setPlateInfo] = useState<{
-    plate: string;
-    type: 'car' | 'motorcycle' | 'invalid' | null;
-    isValid: boolean;
-  } | null>(null);
+  const [plateInfo, setPlateInfo] = useState<PlateInfo | null>(null);
 
-  // ✅ Función para renderizar icono de vehículo
-  const renderVehicleIcon = (type: 'car' | 'motorcycle' | null) => {
-    if (type === 'car') return '🚗';
-    if (type === 'motorcycle') return '🏍️';
-    return '❓';
-  };
-
-  // Verificar si el navegador soporta getUserMedia
+  // Verificar soporte de cámara
   useEffect(() => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Tu navegador no soporta la cámara");
+      console.log("Tu navegador no soporta la cámara");
     }
   }, []);
 
-  // Función para validar placa colombiana
+  // Validar placa colombiana
   const validateColombianPlate = (text: string) => {
     const cleanText = text
       .toUpperCase()
@@ -40,23 +30,14 @@ export default function CamPage() {
       .replace(/[0O]/g, '0')
       .replace(/[I]/g, '1');
 
-    console.log("🔍 Texto limpio para validar:", cleanText);
-
-    const carPlatePatterns = [
-      /^[A-Z]{3}\d{3}$/,
-      /^[A-Z]{3}\d{2}[A-Z]$/,
-    ];
-
-    const motorcyclePlatePatterns = [
-      /^[A-Z]{3}\d{2}[A-Z]$/,
-      /^[A-Z]{3}\d{3}$/,
-    ];
+    const carPatterns = [/^[A-Z]{3}\d{3}$/, /^[A-Z]{3}\d{2}[A-Z]$/];
+    const motorcyclePatterns = [/^[A-Z]{3}\d{2}[A-Z]$/, /^[A-Z]{3}\d{3}$/];
 
     let isValid = false;
     let type: 'car' | 'motorcycle' | null = null;
     let formattedPlate = '';
 
-    for (const pattern of carPlatePatterns) {
+    for (const pattern of carPatterns) {
       if (pattern.test(cleanText)) {
         isValid = true;
         type = 'car';
@@ -66,7 +47,7 @@ export default function CamPage() {
     }
 
     if (!isValid) {
-      for (const pattern of motorcyclePlatePatterns) {
+      for (const pattern of motorcyclePatterns) {
         if (pattern.test(cleanText)) {
           isValid = true;
           type = 'motorcycle';
@@ -77,20 +58,13 @@ export default function CamPage() {
     }
 
     if (isValid && formattedPlate.length >= 6) {
-      const firstPart = formattedPlate.substring(0, 3);
-      const secondPart = formattedPlate.substring(3);
-      formattedPlate = `${firstPart}-${secondPart}`;
+      formattedPlate = `${formattedPlate.substring(0, 3)}-${formattedPlate.substring(3)}`;
     }
 
-    return {
-      plate: formattedPlate,
-      type,
-      isValid,
-      rawText: cleanText
-    };
+    return { plate: formattedPlate, type, isValid, rawText: cleanText };
   };
 
-  // Función para extraer texto con Tesseract
+  // Extraer texto con OCR
   const extractTextFromImage = async (imageData: string) => {
     setIsProcessing(true);
     setExtractedText(null);
@@ -98,7 +72,6 @@ export default function CamPage() {
 
     try {
       const worker = await Tesseract.createWorker("spa+eng");
-
       await worker.setParameters({
         tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ",
         tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
@@ -108,110 +81,76 @@ export default function CamPage() {
       await worker.terminate();
 
       const text = result.data.text.trim();
-      console.log("📝 Texto extraído:", text);
+      console.log("📝 Texto:", text);
 
       if (text.length > 0) {
-        const validationResult = validateColombianPlate(text);
-
-        if (validationResult.isValid) {
-          setPlateInfo({
-            plate: validationResult.plate,
-            type: validationResult.type,
-            isValid: true,
-          });
-          setExtractedText(validationResult.plate);
+        const validation = validateColombianPlate(text);
+        
+        if (validation.isValid) {
+          setPlateInfo({ plate: validation.plate, type: validation.type, isValid: true });
+          setExtractedText(validation.plate);
           setShowImage(false);
         } else {
-          const alphanumericText = text
-            .replace(/[^A-Za-z0-9]/g, "")
-            .toUpperCase();
-
-          const secondValidation = validateColombianPlate(alphanumericText);
-
+          const secondValidation = validateColombianPlate(text.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
+          
           if (secondValidation.isValid) {
-            setPlateInfo({
-              plate: secondValidation.plate,
-              type: secondValidation.type,
-              isValid: true,
-            });
+            setPlateInfo({ plate: secondValidation.plate, type: secondValidation.type, isValid: true });
             setExtractedText(secondValidation.plate);
             setShowImage(false);
           } else {
             setExtractedText("No se detectó una placa válida");
-            setPlateInfo({
-              plate: "",
-              type: null,
-              isValid: false,
-            });
+            setPlateInfo({ plate: "", type: null, isValid: false });
             setShowImage(true);
           }
         }
       } else {
-        setExtractedText("No se detectó texto en la imagen");
-        setPlateInfo({
-          plate: "",
-          type: null,
-          isValid: false,
-        });
+        setExtractedText("No se detectó texto");
+        setPlateInfo({ plate: "", type: null, isValid: false });
         setShowImage(true);
       }
     } catch (error) {
-      console.error("❌ Error al extraer texto:", error);
+      console.error("❌ Error:", error);
       setExtractedText("Error al procesar la imagen");
-      setPlateInfo({
-        plate: "",
-        type: null,
-        isValid: false,
-      });
+      setPlateInfo({ plate: "", type: null, isValid: false });
       setShowImage(true);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Activar cámara
+  // Control de cámara
   const activateCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach(track => track.stop());
-
       setIsCameraActive(true);
       setError(null);
       setExtractedText(null);
       setCapturedImage(null);
       setPlateInfo(null);
     } catch (err) {
-      setError("No se pudo acceder a la cámara. Por favor, verifica los permisos.");
-      console.error("Error de cámara:", err);
+      setError("No se pudo acceder a la cámara");
+      console.error(err);
     }
   };
 
-  // Desactivar cámara
   const deactivateCamera = () => {
     setIsCameraActive(false);
     setCapturedImage(null);
     setExtractedText(null);
     setShowImage(true);
     setPlateInfo(null);
-
-    if (webcamRef.current) {
-      const stream = webcamRef.current.stream;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+    if (webcamRef.current?.stream) {
+      webcamRef.current.stream.getTracks().forEach(track => track.stop());
     }
   };
 
-  // Capturar foto y procesar con OCR
   const capturePhoto = async () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         setCapturedImage(imageSrc);
         setShowImage(true);
-        console.log("📸 Foto capturada");
         await extractTextFromImage(imageSrc);
       }
     }
@@ -220,11 +159,8 @@ export default function CamPage() {
   // Limpiar al desmontar
   useEffect(() => {
     return () => {
-      if (webcamRef.current) {
-        const stream = webcamRef.current.stream;
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
+      if (webcamRef.current?.stream) {
+        webcamRef.current.stream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -253,14 +189,11 @@ export default function CamPage() {
               onClick={capturePhoto}
               disabled={isProcessing}
               className={`px-6 py-3 text-white rounded-lg font-medium transition-colors ${
-                isProcessing
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-green-500 hover:bg-green-600'
+                isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'
               }`}
             >
               {isProcessing ? "⏳ Procesando..." : "📸 Capturar Placa"}
             </button>
-
             <button
               onClick={deactivateCamera}
               className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
@@ -279,28 +212,17 @@ export default function CamPage() {
             screenshotFormat="image/jpeg"
             width="100%"
             height="auto"
-            videoConstraints={{
-              facingMode: "environment",
-              width: 640,
-              height: 480
-            }}
-            onUserMedia={() => {
-              console.log("✅ Cámara activada correctamente");
-            }}
-            onUserMediaError={(error) => {
-              console.error("❌ Error:", error);
+            videoConstraints={{ facingMode: "environment", width: 640, height: 480 }}
+            onUserMedia={() => console.log("✅ Cámara activada")}
+            onUserMediaError={() => {
               setIsCameraActive(false);
               setError("Error al iniciar la cámara");
             }}
             className="w-full h-auto block"
           />
-
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4/5 h-1/3 border-2 border-dashed border-white/50 rounded-xl flex items-center justify-center pointer-events-none">
-            <div className="text-white/70 text-sm text-center">
-              📍 Encuadra la placa aquí
-            </div>
+            <div className="text-white/70 text-sm text-center">📍 Encuadra la placa aquí</div>
           </div>
-
           {isProcessing && (
             <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
               <div className="text-center text-white">
@@ -321,35 +243,24 @@ export default function CamPage() {
           {plateInfo?.isValid ? (
             <div className="p-5 bg-green-50 rounded-lg border-2 border-green-300 mb-4">
               <div className="flex items-center gap-4 flex-wrap">
-                <span className="text-6xl">
-                 
-                </span>
+                <span className="text-6xl">{getVehicleIcon(plateInfo.type)}</span>
                 <div>
-                  <div className="text-4xl font-bold text-green-800">
-                    {plateInfo.plate}
-                  </div>
+                  <div className="text-4xl font-bold text-green-800">{plateInfo.plate}</div>
                   <div className="text-lg text-green-700 mt-1">
-                    {plateInfo.type === 'car' ? '🚗 Automóvil' : '🏍️ Motocicleta'}
+                    {getVehicleLabel(plateInfo.type)}
                   </div>
                 </div>
               </div>
             </div>
           ) : (
             <>
-              {/* ✅ Usar showImage para controlar la visualización */}
               {showImage && (
-                <img
-                  src={capturedImage}
-                  alt="Captura"
-                  className="w-full rounded-lg mb-4"
-                />
+                <img src={capturedImage} alt="Captura" className="w-full rounded-lg mb-4" />
               )}
               {extractedText && (
                 <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200 text-red-800">
                   <strong>❌ No se detectó una placa válida</strong>
-                  <div className="mt-2 text-sm">
-                    Texto detectado: {extractedText}
-                  </div>
+                  <div className="mt-2 text-sm">Texto detectado: {extractedText}</div>
                   <div className="mt-2 text-sm text-gray-600">
                     💡 Asegúrate de que la placa esté bien iluminada y enfocada
                   </div>
@@ -370,7 +281,6 @@ export default function CamPage() {
             >
               🔄 Re-analizar
             </button>
-
             <button
               onClick={() => {
                 setCapturedImage(null);
@@ -382,27 +292,21 @@ export default function CamPage() {
             >
               🗑️ Descartar
             </button>
-
             {plateInfo?.isValid && (
               <>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(plateInfo.plate);
-                    alert("✅ Placa copiada al portapapeles");
+                    alert("✅ Placa copiada");
                   }}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   📋 Copiar Placa
                 </button>
-
                 <button
                   onClick={() => {
-                    console.log("🚗 Placa validada:", {
-                      plate: plateInfo.plate,
-                      type: plateInfo.type,
-                      timestamp: new Date().toISOString()
-                    });
-                    alert(`✅ Placa ${plateInfo.plate} enviada al servidor`);
+                    console.log("🚗 Placa:", plateInfo);
+                    alert(`✅ Placa ${plateInfo.plate} enviada`);
                   }}
                   className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                 >
