@@ -1,3 +1,4 @@
+// contexts/AuthContext.tsx (CORREGIDO)
 "use client";
 
 import {
@@ -14,7 +15,7 @@ import {
   useSession,
 } from "next-auth/react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface AuthContextType {
   user: {
@@ -36,22 +37,22 @@ const AuthContext = createContext<AuthContextType>(
   {} as AuthContextType
 );
 
-export function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+// Componente interno que usa useSession
+function AuthProviderInner({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
-
   const router = useRouter();
+  const pathname = usePathname();
 
   const authenticated = !!session;
 
   useEffect(() => {
-    if (authenticated) {
+    // NO redirigir en la página de cámara
+    const isCamaraPage = pathname === '/camaraadd' || pathname?.startsWith('/camaraadd');
+    
+    if (authenticated && !isCamaraPage) {
       router.push("/dashboard");
     }
-  }, [authenticated, router]);
+  }, [authenticated, router, pathname]);
 
   const loginGoogle = () => {
     signIn("google");
@@ -88,11 +89,28 @@ export function AuthProvider({
         logout,
       }}
     >
-      <SessionProvider>
       {children}
-      </SessionProvider>
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+// Componente principal que envuelve con SessionProvider
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <SessionProvider>
+      <AuthProviderInner>{children}</AuthProviderInner>
+    </SessionProvider>
+  );
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

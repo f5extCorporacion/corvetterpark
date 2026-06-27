@@ -7,6 +7,9 @@ import { securityPages, SecurityPage } from "../data/securityPages";
 import * as Icons from "react-icons/fa";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
+import AdminProcess from "./adminprocess";
+import CamLayout from "./cam/layout";
+import CamPage from "./cam/CamPage";
 
 // Tipos para DriveJS
 interface DriverStep {
@@ -288,6 +291,8 @@ export default function Dashboard() {
 
         {/* Contenido principal - Cards */}
         <main className="flex-1 p-6 bg-base-200 overflow-y-auto">
+          <CamPage/>
+          <AdminProcess/>
           <div id="cards-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {currentItems.map((page: SecurityPage) => {
               const IconComponent = iconMap[page.icon];

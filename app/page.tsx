@@ -34,11 +34,11 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col">
 
-      {/* Fondo animado */}
+      {/* Fondo animado con blur /10 */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <MagicRings
-          color="#A855F7"
-          colorTwo="#6366F1"
+          color="#FF3E00"
+          colorTwo="#FF3E10"
           ringCount={6}
           speed={1}
           attenuation={10}
@@ -47,7 +47,7 @@ export default function Home() {
           radiusStep={0.1}
           scaleRate={0.1}
           opacity={1}
-          blur={0}
+          blur={10} // ← Cambiado a /10
           noiseAmount={0.1}
           rotation={0}
           ringGap={1.5}
@@ -67,93 +67,125 @@ export default function Home() {
       </div>
 
       {/* Main */}
-      <main className="relative z-10 flex-1 container mx-auto px-4 py-8 flex flex-col justify-between gap-12">
+      <main className="relative z-10 flex-1 container mx-auto px-4 py-8 flex flex-col justify-center gap-12">
 
-        <div className="max-w-4xl mx-auto w-full">
-          <div className="card md:card-side bg-base-200/60 backdrop-blur-md shadow-2xl border border-base-300">
+        <div className="max-w-5xl mx-auto w-full">
+          <div className="card bg-base-200/20 backdrop-blur-md shadow-2xl border border-base-300 overflow-hidden">
 
-            <figure className="w-full md:w-2/5 min-h-[200px] relative bg-base-300/30 p-6 flex justify-center items-center">
-              <Image
-                src="/imagen12.png"
-                alt="RangersRoot"
-                width={250}
-                height={150}
-                className="object-contain rounded-xl"
-                priority
-              />
-            </figure>
+            {/* Grid layout para mejor distribución */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
 
-            <div className="card-body md:w-3/5 backdrop-blur-sm bg-base-100/30 rounded-2xl shadow-2xl border border-white/10 p-8">
-  {/* Badge decorativo */}
-  <div className="flex items-center gap-2 mb-2">
-    <span className="badge badge-primary badge-sm gap-1">
-      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-      En desarrollo
-    </span>
-    <span className="badge badge-secondary badge-sm">v1.0</span>
-  </div>
+              {/* Columna Izquierda - Imagen */}
+              <figure className="relative min-h-[280px] md:min-h-[400px] bg-base-300/30 p-6 flex justify-center items-center">
+                <div className="relative w-full max-w-[300px] h-[200px] md:h-[280px]">
+                  <Image
+                    src="/imagen1.png"
+                    alt="CorvettePark"
+                    fill
+                    className="object-contain rounded-xl"
+                    priority
+                  />
+                </div>
+                {/* Badges flotantes sobre la imagen */}
+                <div className="absolute top-4 left-4 flex flex-col gap-2">
+                  <span className="badge badge-primary badge-sm gap-1">
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    En desarrollo
+                  </span>
+                  <span className="badge badge-secondary badge-sm">v1.0</span>
+                </div>
+              </figure>
 
-  {/* Título principal */}
-  <h1 className="card-title text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-    RangersRoot
-  </h1>
-  
-  <h2 className="text-xl font-semibold text-base-content/80 mt-1">
-    🔐 Seguridad Informática · Hacking Ético · Software
-  </h2>
+              {/* Columna Derecha - Contenido */}
+              <div className="flex flex-col justify-center p-6 md:p-8 backdrop-blur-sm bg-base-100/10">
 
-  {/* Descripción */}
-  <div className="py-4 space-y-3 text-base-content/80">
-    <p className="text-lg leading-relaxed">
-      <span className="text-primary font-semibold">RangersRoot</span> es un espacio dedicado a la 
-      <span className="text-secondary font-medium"> seguridad informática</span>, 
-      <span className="text-accent font-medium"> hacking ético</span> y 
-      <span className="text-primary font-medium"> desarrollo de software</span>.
-    </p>
-    
-    <p className="text-base leading-relaxed">
-      Nuestro objetivo es crear una comunidad donde todos puedan aprender, 
-      compartir y crecer en el fascinante mundo de la ciberseguridad.
-    </p>
+                {/* Título principal CORVETTE PARK */}
+                <div className="mb-2">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
+                    <span className="bg-gradient-to-r from-[#FF3E00] via-orange-500 to-amber-500 bg-clip-text text-transparent">
+                      Corvette
+                    </span>
+                    <span className="bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-400 bg-clip-text text-transparent">
+                      Park
+                    </span>
+                  </h1>
+                  <div className="h-1 w-24 bg-gradient-to-r from-[#FF3E00] to-orange-400 rounded-full mt-1"></div>
+                </div>
 
-    <div className="flex flex-wrap gap-2 mt-3">
-      <span className="badge badge-outline badge-primary">🛡️ Pentesting</span>
-      <span className="badge badge-outline badge-secondary">💻 Desarrollo</span>
-      <span className="badge badge-outline badge-accent">🔍 OSINT</span>
-      <span className="badge badge-outline badge-info">🌐 Redes</span>
-      <span className="badge badge-outline badge-success">🐧 Linux</span>
-    </div>
+                {/* Subtítulo */}
+                <h2 className="text-lg md:text-xl font-semibold text-base-content/80 mt-1">
+                  🚗 Solución Tecnológica para el Parkeo
+                </h2>
 
-    {/* Mensaje de login con Google */}
-    <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-xl backdrop-blur-sm">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-          <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-primary">
-            🚀 Acceso con Google disponible
-          </p>
-          <p className="text-xs text-base-content/60">
-            Inicia sesión con tu cuenta de Google para acceder a contenido exclusivo
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
+                {/* Tags de tecnología */}
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="badge badge-outline badge-primary">Blockchain</span>
+                  <span className="badge badge-outline badge-secondary">Linux</span>
+                  <span className="badge badge-outline badge-accent">IoT</span>
+                  <span className="badge badge-outline badge-info">🔒 Seguridad</span>
+                  <span className="badge badge-outline badge-success">🐧 Open Source</span>
+                </div>
 
+                {/* Descripción */}
+                <div className="py-4 space-y-3 text-base-content/80">
+                  <p className="text-sm md:text-base leading-relaxed">
+                    <span className="font-bold text-[#FF3E00]">CorvettePark</span> es una 
+                    <span className="font-semibold text-primary"> aplicación tecnológica </span>
+                    para el estacionamiento que integra 
+                    <span className="font-semibold text-accent"> blockchain</span>, 
+                    <span className="font-semibold text-secondary"> Linux</span> y 
+                    <span className="font-semibold text-info"> tecnología de punta</span> 
+                    para una experiencia segura y eficiente.
+                  </p>
 
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2 bg-primary/5 rounded-lg p-2">
+                      <span className="text-[#FF3E00]">⛓️</span>
+                      <span>Blockchain</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-secondary/5 rounded-lg p-2">
+                      <span className="text-[#FF3E00]">🐧</span>
+                      <span>Linux</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-accent/5 rounded-lg p-2">
+                      <span className="text-[#FF3E00]">📡</span>
+                      <span>IoT</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-info/5 rounded-lg p-2">
+                      <span className="text-[#FF3E00]">🛡️</span>
+                      <span>Seguridad</span>
+                    </div>
+                  </div>
+                </div>
 
+                {/* CTA - Acceso con Google */}
+                <div className="mt-2 p-3 bg-[#FF3E00]/10 border border-[#FF3E00]/20 rounded-xl backdrop-blur-sm hover:bg-[#FF3E00]/15 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#FF3E00]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-[#FF3E00]" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#FF3E00]">
+                        🚀 Acceso con Google
+                      </p>
+                      <p className="text-xs text-base-content/60">
+                        Inicia sesión para acceder a contenido exclusivo
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-</div>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Logo Loop */}
         <div className="w-full">
           <LogoLoop
             logos={techLogos}
@@ -169,9 +201,10 @@ export default function Home() {
 
       </main>
 
-      <footer className="footer footer-center p-10 bg-base-200 rounded-t-xl relative z-10">
-        <p>
-          Copyright © {new Date().getFullYear()} - RangersRoot
+      {/* Footer */}
+      <footer className="footer footer-center p-10 bg-base-200/50 backdrop-blur-sm rounded-t-xl relative z-10 border-t border-base-300/30">
+        <p className="text-base-content/60">
+          Copyright © {new Date().getFullYear()} - CorvettePark
         </p>
       </footer>
     </div>

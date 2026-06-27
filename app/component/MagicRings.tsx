@@ -114,9 +114,9 @@ type UniformsType = {
 };
 
 export default function MagicRings({
-  color = '#fc42ff',
-  colorTwo = '#42fcff',
-  speed = 1,
+  color = '#FF3E00',
+  colorTwo = '#FF3E00',
+  speed = 0.2,
   ringCount = 6,
   attenuation = 10,
   lineThickness = 2,

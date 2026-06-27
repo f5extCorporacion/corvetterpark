@@ -6,7 +6,7 @@ export default function HeaderMenu() {
     <div className="navbar bg-base-200 shadow-md">
       <div className="navbar-start ps-4">
         <Link href="/" className="text-lg font-bold">
-          <span className="text-green-400">Rangers</span>Root
+          <span className="text-[#FF3E00]">CORVETTE</span>PARK
         </Link>
       </div>
 
